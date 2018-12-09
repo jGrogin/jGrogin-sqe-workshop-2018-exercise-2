@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import {parseCode} from './code-analyzer';
+import {parseCode, parseCode_with_source, get_declaration_collection, getSymbolicSubstitution} from './code-analyzer';
 
 $(document).ready(function () {
     $('#codeSubmissionButton').click(() => {
@@ -8,3 +8,12 @@ $(document).ready(function () {
         $('#parsedCode').val(JSON.stringify(parsedCode, null, 2));
     });
 });
+
+$(document).ready(function () {
+    $('#codeSymbolicSubstitution').click(() => {
+        let codeToParse = $('#codePlaceholder').val();
+        let parsedCode = getSymbolicSubstitution(codeToParse);
+        $('#parsedCode').val(parsedCode);
+    });
+});
+
