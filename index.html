@@ -28,11 +28,16 @@
                         <label>Enter code here</label>
                     </div>
                 </td>
+                <td><div>
+                    <label>Vector Input here</label>
+                </div> </td>
                 <td>
                     <div>
                         <label>Parsed code here</label>
                     </div>
+
                 </td>
+
             </tr>
             <tr>
                 <td>
@@ -57,9 +62,14 @@ function foo(x, y, z){
 </textarea>
                     </div>
                 </td>
+                <td><div class="textAreaWrapper">
+                    <textarea id="inputVector" title="Input Vector">{"x":6,"y":6,"z":12}</textarea>
+                </div></td>
                 <td>
                     <div class="textAreaWrapper">
                         <textarea id="parsedCode" title="Parse code"></textarea>
+                    </div>
+                    <div id="parsedCodeHighlighted">
                     </div>
                 </td>
             </tr>
@@ -68,13 +78,17 @@ function foo(x, y, z){
                     <div>
                         <button id="codeSubmissionButton">Parse code</button>
                         <button id="codeSymbolicSubstitution"> Symbolic Substitution</button>
+                        <button id="codeEval"> Eval</button>
+
                     </div>
                 </td>
                 <td>
                 </td>
             </tr>
+            <tr><td><code> <div id="outputText">
+            </div> </code></td><td>  </td></tr>
+            <tr><td></td><td></td></tr>
         </table>
-
         <script src="dist/bundle.js"></script>
     </body>
 </html>
