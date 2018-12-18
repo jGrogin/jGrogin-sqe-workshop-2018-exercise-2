@@ -16,18 +16,21 @@ const varRemover = {
 };
 
 function collectVars(node) {
-    return varCollector[node.type] ? varCollector[node.type](node) : /*varReplacer[node.type] ? varReplacer[node.type](node) :*/ null;
+    return varCollector[node.type](node);
 }
 
-function is_assignment(except = []) {
-    return x => (x.type === 'AssignmentExpression' && except.includes(x.left.txt)) ||
-        (x.type === 'ExpressionStatement' && x.expression.type === 'AssignmentExpression' && except.includes(x.expression.left.txt)) ||
+function includes_except_assignment_expression(x, except) {
+    return /*(x.type === 'AssignmentExpression' && except.includes(x.left.txt)) ||*/(x.type === 'ExpressionStatement' && x.expression.type === 'AssignmentExpression' && except.includes(x.expression.left.txt));
+}
+
+function is_assignment(except) {
+    return x => includes_except_assignment_expression(x, except) ||
         (!['VariableDeclaration', 'AssignmentExpression'].includes(x.type)
             &&
             (!(x.type == 'ExpressionStatement' && ['VariableDeclaration', 'AssignmentExpression'].includes(x.expression.type))));
 }
 
-function remove_fromBlockStatement(node, except = []) {
+function remove_fromBlockStatement(node, except) {
     node.body = node.body.filter(is_assignment(except));
 }
 
@@ -64,7 +67,7 @@ function saveVarsInScope(node) {
     currentScope[id] = res;
 }
 
-function get_value_from_scope(node, id = null) {
+function get_value_from_scope(node) {
     for (let i = /*node.txt === id ? scopeChain.length - 2 :*/ scopeChain.length - 1; i > -1; i--) {
         if (scopeChain[i][node.txt]) {
             return scopeChain[i][node.txt];
@@ -76,7 +79,7 @@ function get_value_from_scope(node, id = null) {
 function handleNewScope(node) {
     scopeChain.push({});
     if (node.type === 'FunctionDeclaration') {
-        params = node.params.map(x => x.left ? x.left.txt : x.txt).concat(Object.keys(scopeChain[0]));
+        params = node.params.map(x => x.txt).concat(Object.keys(scopeChain[0]));
         node.params.forEach(x => scopeChain[scopeChain.length - 1][x.txt] = x);
     }
 }
@@ -117,21 +120,25 @@ const getSymbolicSubstitution = (codeToParse) => {
     return res;
 };
 
-function evalAst(ast, inputVector) {
+function should_eval_if_test(node,parent) {
+    return node.type === 'IfStatement' && !(parent.type === 'IfStatement' && parent.alternate==node && parent.dit);
+}
+
+function evalAst(code, inputVector) {
     let toColor=[];
-    estraverse.traverse(ast, {
-            enter: function (node) {
-                if (node.type === 'IfStatement' && !(typeof node.parent === 'object' && node.parent.type ==='IfStatement' && node.parent.dit)) {
-                    if (staticeval(node.test, inputVector)){
-                        node.dit = true;
-                        toColor.push([node.range[0],node.consequent.range[1],true]);
-                    }
-                    else{
-                        toColor.push([node.range[0],node.consequent.range[1], false]);
-                    }
+    estraverse.traverse(parseCode_with_source(code), {
+        enter: function (node, parent) {
+            if (should_eval_if_test(node, parent)) {
+                if (staticeval(node.test, inputVector)){
+                    node.dit = true;
+                    toColor.push([node.test.range[0],node.test.range[1],true]);
+                }
+                else{
+                    toColor.push([node.test.range[0],node.test.range[1], false]);
                 }
             }
         }
+    }
     );
     return toColor;
 }

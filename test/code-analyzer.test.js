@@ -1,5 +1,5 @@
 import assert from 'assert';
-import {parseCode, getSymbolicSubstitution} from '../src/js/code-analyzer';
+import {parseCode, getSymbolicSubstitution, evalAst} from '../src/js/code-analyzer';
 
 describe('The javascript parser', () => {
     it('is parsing an empty function correctly', () => {
@@ -68,48 +68,79 @@ describe('The javascript SymbolicSubstitution', () => {
     });
     it('is parsing a simple variable declaration correctly', () => {
         assert.equal(
-            getSymbolicSubstitution('let a = 1;'),
-            'let a = 1;');
+            getSymbolicSubstitution('function foo(x, y, z){\n' +
+                '    let a = x + 1;\n' +
+                '    let b = a + y;\n' +
+                '    let c = 0;\n' +
+                '    \n' +
+                '    while (a < z) {\n' +
+                '        c = a + b;\n' +
+                '        z = c * 2;\n' +
+                '    }\n' +
+                '    \n' +
+                '    return z;\n' +
+                '}\n'),
+            'function foo(x, y, z) {\n' +
+            '    while (x + 1 < z) {\n' +
+            '        z = (x + 1 + (x + 1 + y)) * 2;\n' +
+            '    }\n' +
+            '    return z;\n' +
+            '}');
     });
+
     it('is parsing a simple variable declaration correctly', () => {
         assert.equal(
-            getSymbolicSubstitution('let a = 1;'),
-            'let a = 1;');
+            getSymbolicSubstitution('function foo(x, y, z){\n' +
+                '   x=1;\n' +
+                '}'),
+            'function foo(x, y, z) {\n' +
+            '    x = 1;\n' +
+            '}');
     });
+
+});
+
+describe('The coloring parser', () => {
+    it('is coloring an empty function correctly', () => {
+        assert.equal(
+            JSON.stringify(evalAst('')),
+            '[]'
+        );
+    });
+
     it('is parsing a simple variable declaration correctly', () => {
         assert.equal(
-            getSymbolicSubstitution('let a = 1;'),
-            'let a = 1;');
+            JSON.stringify(evalAst('let a = 1;')),
+            '[]'
+        );
     });
     it('is parsing a simple variable declaration correctly', () => {
-        assert.equal(
-            getSymbolicSubstitution('let a = 1;'),
-            'let a = 1;');
+        assert.deepEqual(
+            evalAst('function foo(x, y, z) {\n' +
+                '    if (x + 1 + y < z) {\n' +
+                '        return x + y + z + (0 + 5);\n' +
+                '    } else if (x + 1 + y < z * 2) {\n' +
+                '        return x + y + z + (0 + x + 5);\n' +
+                '    } else {\n' +
+                '        return x + y + z + (0 + z + 5);\n' +
+                '    }\n' +
+                '}', {x:6,y:6,z:12}),
+            [[32,45,false],[100,117,true]]
+        );
     });
     it('is parsing a simple variable declaration correctly', () => {
-        assert.equal(
-            getSymbolicSubstitution('let a = 1;'),
-            'let a = 1;');
-    });
-    it('is parsing a simple variable declaration correctly', () => {
-        assert.equal(
-            getSymbolicSubstitution('let a = 1;'),
-            'let a = 1;');
-    });
-    it('is parsing a simple variable declaration correctly', () => {
-        assert.equal(
-            getSymbolicSubstitution('let a = 1;'),
-            'let a = 1;');
-    });
-    it('is parsing a simple variable declaration correctly', () => {
-        assert.equal(
-            getSymbolicSubstitution('let a = 1;'),
-            'let a = 1;');
-    });
-    it('is parsing a simple variable declaration correctly', () => {
-        assert.equal(
-            getSymbolicSubstitution('let a = 1;'),
-            'let a = 1;');
+        assert.deepEqual(
+            evalAst('function foo(x, y, z) {\n' +
+                '    if (x + 1 + y < z) {\n' +
+                '        return x + y + z + (0 + 5);\n' +
+                '    } else if (x + 1 + y < z * 2) {\n' +
+                '        return x + y + z + (0 + x + 5);\n' +
+                '    } else {\n' +
+                '        return x + y + z + (0 + z + 5);\n' +
+                '    }\n' +
+                '}', {x:6,y:6,z:120}),
+            [[32,45,true]]
+        );
     });
 });
 
