@@ -126,7 +126,7 @@ function should_eval_if_test(node,parent) {
 
 function evalAst(code, inputVector) {
     let toColor=[];
-    estraverse.traverse(parseCode_with_source(code), {
+    estraverse.replace(parseCode_with_source(code), {
         enter: function (node, parent) {
             if (should_eval_if_test(node, parent)) {
                 if (staticeval(node.test, inputVector)){
@@ -135,6 +135,7 @@ function evalAst(code, inputVector) {
                 }
                 else{
                     toColor.push([node.test.range[0],node.test.range[1], false]);
+                    node.consequent = {};
                 }
             }
         }
